@@ -11,11 +11,13 @@ and give to a fully connected layer with one hidden layer. We will use a simplif
 """
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 from idx3_format import load_img_lbl_idx3
 from idx3_format import display_img
 from convolution_manual import *
 from sklearn.model_selection import train_test_split
+from PIL import Image
 import numpy as np
 import random
 import pandas as pad
@@ -212,8 +214,9 @@ class Model:
 
     # restore model with last training
     self.restore_model()
-
-    pred = self.sess.run(self.y_conv, feed_dict={self.x: [img.reshape(width*height)], self.keep_prob: 1.0})
+    #print(img.shape)
+    print(self.width_pics, self.height_pic)
+    pred = self.sess.run(self.y_conv, feed_dict={self.x: [img.reshape(self.width_pics*self.height_pic)], self.keep_prob: 1.0})
     pred = tf.argmax(pred, 1)
     
     # 0 for non-glasses and 1 for glasses
@@ -232,7 +235,8 @@ class Model:
     
     for index in range(32):
       d = c[0,index,:,:]
-      d = scipy.misc.imresize(d, (56, 56))
+      d = np.array(Image.fromarray(d).resize((56,56)))
+      #d = scipy.misc.imresize(d, (56, 56))
       path = base_path+"layer_1_"+str(index)+".png"
       save_img(d, path_to=path)
 
@@ -240,7 +244,8 @@ class Model:
     c = np.transpose(a,[0,3,1,2])
     for index in range(64):
       d = c[0,index,:,:]
-      d = scipy.misc.imresize(d, (56, 56))
+      d = np.array(Image.fromarray(d).resize((56,56)))
+      #d = scipy.misc.imresize(d, (56, 56))
       path = base_path+"layer_2_"+str(index)+".png"
       save_img(d, path_to=path)
 
@@ -248,7 +253,8 @@ class Model:
     c = np.transpose(a,[0,3,1,2])
     for index in range(128):
       d = c[0,index,:,:]
-      d = scipy.misc.imresize(d, (56, 56))
+      d = np.array(Image.fromarray(d).resize((56,56)))
+      #d = scipy.misc.imresize(d, (56, 56))
       path = base_path+"layer_3_"+str(index)+".png"
       save_img(d, path_to=path)
 
@@ -256,7 +262,8 @@ class Model:
     c = np.transpose(a,[0,3,1,2])
     for index in range(256):
       d = c[0,index,:,:]
-      d = scipy.misc.imresize(d, (56, 56))
+      d = np.array(Image.fromarray(d).resize((56,56)))
+      #d = scipy.misc.imresize(d, (56, 56))
       path = base_path+"layer_4_"+str(index)+".png"
       save_img(d, path_to=path)
 
@@ -289,6 +296,7 @@ if __name__ == '__main__':
   else:
     img = read_image(img_to_test)
     width,height = get_width_height(img)
+    print(width, height)
     #output_img_ReLu = convolutional(img,width,height,brightness=[])
     #display_img(img)
     prediction = model.single_test(img)

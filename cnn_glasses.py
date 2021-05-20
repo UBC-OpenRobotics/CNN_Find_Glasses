@@ -35,7 +35,7 @@ class Model:
     self.size_classes = len(y_train_[0])
     self.height_pic = len(X_train_[0])
     self.width_pics = len(X_train_[0][0])
-
+    print('SIZE CLASSES ' + str(self.size_classes))
     self.NUM_STEPS = NUM_STEPS_
     self.MINIBATCH_SIZE = MINIBATCH_SIZE_
     self.learning_rate = learning_rate_

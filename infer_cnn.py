@@ -6,6 +6,7 @@ import os
 import sys
 import numpy as np 
 from PIL import Image, ImageOps
+import cv2 #ONly used to display, can be commented out
 
 
 class Model():
@@ -75,6 +76,8 @@ class Model():
         # check for accuracy
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32)) 
 
+        #Restore saved model
+        self.restore_model(load_from)
 
     # create a weight variable - Filter
     def weight_variable(self, shape):
@@ -126,8 +129,7 @@ class Model():
         print('[LOG] Model Loaded')
 
     def infer(self, img, load_from="saved_model/model.ckpt"):
-        #Restore saved model
-        self.restore_model(load_from)
+
         pred = self.sess.run(self.y_conv, feed_dict={self.x: [img.reshape(self.width_pics*self.height_pic)], self.keep_prob: 1.0})
         pred = tf.argmax(pred, 1)
         
@@ -149,16 +151,44 @@ if __name__ == '__main__':
     model = Model()
 
     #Check command line args
-    if len(sys.argv) == 2:
-        img_path = sys.argv[1]
+    show = False
+    if len(sys.argv) >= 2:
+        in_path = sys.argv[1]
+
+        if len(sys.argv) >2 and sys.argv[2] == '-s':
+            show = True
+
     else:
         print('[ERROR] Provide path to input image')
         exit()
 
-    #Load image and preprocess
-    img = load_image(img_path)
+    #Load image or directory of images
+    if os.path.isdir(in_path):
+        img_paths = [os.path.join(in_path, filename) for filename in os.listdir(in_path)]
+    else:
+        img_paths = [in_path]
 
-    #Run inference
-    pred = model.infer(img)
-    
-    print("\nYES, Person is using Glasses\n" if pred ==1 else "NO, Person is not using Glasses\n")
+    results = {}
+
+    for img_path in img_paths:
+        
+        #Load image and preprocess
+        img = load_image(img_path)
+
+        #Run inference
+        pred = model.infer(img)
+
+        res = "Yes" if pred ==1 else "No"
+        results[img_path] = res
+        
+        if show:
+            img_show = cv2.imread(img_path)
+            img_show = cv2.resize(img_show,(800,700))
+            w,h = img_show.shape[:2]
+            img_show = cv2.putText(img_show, 'Wearing Glassses: ' + res, (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0),2)
+
+            cv2.imshow('Results', img_show)
+            cv2.waitKey(-1)
+    if show:
+        cv2.destroyAllWindows()
+    print(results)
